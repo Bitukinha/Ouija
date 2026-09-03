@@ -1,0 +1,349 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design system: sessão espírita + terminal de kernel, mais sombrio.
+ * Madeira carbonizada quase negra, pergaminho manchado, fósforo verde doente,
+ * chama âmbar e um vermelho de sangue seco reservado pro processo fantasma.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --font-display: "Cinzel Decorative", "Cinzel", serif;
+  --font-serif: "IM Fell English", Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-board: var(--board);
+  --color-board-ink: var(--board-ink);
+  --color-ember: var(--ember);
+  --color-phosphor: var(--phosphor);
+  --color-blocked: var(--blocked);
+  --color-running: var(--running);
+  --color-ghost: var(--ghost);
+}
+
+:root {
+  --radius: 0.35rem;
+  --background: oklch(0.09 0.012 40);
+  --foreground: oklch(0.86 0.025 75);
+  --card: oklch(0.13 0.016 45);
+  --card-foreground: oklch(0.86 0.025 75);
+  --popover: oklch(0.13 0.016 45);
+  --popover-foreground: oklch(0.86 0.025 75);
+  --primary: oklch(0.68 0.19 32);
+  --primary-foreground: oklch(0.97 0.02 80);
+  --secondary: oklch(0.19 0.02 50);
+  --secondary-foreground: oklch(0.86 0.025 75);
+  --muted: oklch(0.17 0.016 50);
+  --muted-foreground: oklch(0.56 0.03 65);
+  --accent: oklch(0.62 0.15 148);
+  --accent-foreground: oklch(0.1 0.02 55);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(0.96 0.02 80);
+  --border: oklch(0.24 0.025 50);
+  --input: oklch(0.18 0.02 50);
+  --ring: oklch(0.68 0.19 32);
+  --board: oklch(0.72 0.045 70);
+  --board-ink: oklch(0.2 0.04 40);
+  --ember: oklch(0.72 0.18 45);
+  --phosphor: oklch(0.74 0.16 150);
+  --blocked: oklch(0.6 0.19 25);
+  --running: oklch(0.74 0.16 150);
+  --ghost: oklch(0.65 0.2 20);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    background-image:
+      radial-gradient(ellipse 60% 45% at 50% 0%, oklch(0.22 0.05 40 / 0.6), transparent 70%),
+      radial-gradient(ellipse 55% 55% at 50% 115%, oklch(0.16 0.05 150 / 0.35), transparent 70%),
+      radial-gradient(ellipse 140% 140% at 50% 50%, transparent 55%, oklch(0 0 0 / 0.65) 100%);
+    background-attachment: fixed;
+    font-family: var(--font-serif);
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    letter-spacing: 0.06em;
+  }
+}
+
+@utility panel {
+  background: linear-gradient(oklch(0.22 0.022 50), oklch(0.185 0.02 50));
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.05),
+    0 12px 40px oklch(0 0 0 / 0.5);
+}
+
+@utility terminal {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+@utility glyph-btn {
+  font-family: var(--font-display);
+  color: var(--color-board-ink);
+  transition:
+    transform 0.15s ease,
+    text-shadow 0.2s ease,
+    opacity 0.2s ease;
+}
+
+@utility glyph-btn-hover {
+  transform: translateY(-2px) scale(1.12);
+  text-shadow: 0 0 14px var(--color-ember);
+}
+
+@utility ember-glow {
+  box-shadow:
+    0 0 0 1px oklch(0.78 0.15 72 / 0.4),
+    0 0 26px oklch(0.78 0.15 72 / 0.35);
+}
+
+@keyframes flicker {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  7% {
+    opacity: 0.4;
+  }
+  9% {
+    opacity: 0.95;
+  }
+  22% {
+    opacity: 0.85;
+  }
+  24% {
+    opacity: 0.3;
+  }
+  26% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.92;
+  }
+  70% {
+    opacity: 0.55;
+  }
+  72% {
+    opacity: 1;
+  }
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate(0, -6px) rotate(1.5deg);
+  }
+}
+
+@utility flicker {
+  animation: flicker 3.5s infinite;
+}
+
+@utility drift {
+  animation: drift 6s ease-in-out infinite;
+}
+
+/* ============ planchette (ponteiro físico sobre o tabuleiro) ============ */
+
+.planchette {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3.2rem;
+  height: 3.2rem;
+  pointer-events: none;
+  transform: translate(-50%, -65%);
+  transition:
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 0.3s ease;
+  opacity: 0;
+  z-index: 5;
+}
+
+.planchette.planchette-active {
+  opacity: 0.92;
+}
+
+.planchette.planchette-ghost {
+  filter: drop-shadow(0 0 10px var(--color-ghost));
+}
+
+.planchette-body {
+  width: 100%;
+  height: 100%;
+  clip-path: polygon(50% 0%, 100% 62%, 78% 100%, 22% 100%, 0% 62%);
+  background: radial-gradient(
+    circle at 50% 35%,
+    oklch(0.3 0.05 45 / 0.95),
+    oklch(0.14 0.03 40 / 0.95) 75%
+  );
+  border: 1px solid oklch(0.55 0.08 55 / 0.7);
+  box-shadow:
+    0 0 18px oklch(0.78 0.17 55 / 0.35),
+    inset 0 0 10px oklch(0 0 0 / 0.6);
+}
+
+.planchette-eye {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: oklch(0.78 0.17 55 / 0.85);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 8px oklch(0.78 0.17 55 / 0.9);
+}
+
+/* ============ processo fantasma: log e texto instáveis ============ */
+
+@keyframes ghost-jitter {
+  0%,
+  100% {
+    transform: translateX(0);
+    filter: none;
+  }
+  20% {
+    transform: translateX(-1px);
+  }
+  40% {
+    transform: translateX(1px);
+    filter: hue-rotate(8deg);
+  }
+  60% {
+    transform: translateX(-1px);
+  }
+  80% {
+    transform: translateX(1px);
+  }
+}
+
+@utility ghost-line {
+  animation: ghost-jitter 2.4s ease-in-out infinite;
+  text-shadow: 0 0 6px var(--color-ghost);
+}
+
+/* ============ jumpscare overlay ============ */
+
+@keyframes jumpscare-flash {
+  0% {
+    background-color: oklch(0 0 0 / 0);
+  }
+  8% {
+    background-color: oklch(0.6 0.2 25 / 0.9);
+  }
+  16% {
+    background-color: oklch(0 0 0 / 0.95);
+  }
+  30% {
+    background-color: oklch(0.6 0.2 25 / 0.55);
+  }
+  45% {
+    background-color: oklch(0 0 0 / 0.97);
+  }
+  100% {
+    background-color: oklch(0 0 0 / 0.97);
+  }
+}
+
+@keyframes jumpscare-shake {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  20% {
+    transform: scale(1.08) rotate(-3deg);
+  }
+  40% {
+    transform: scale(0.96) rotate(2deg);
+  }
+  60% {
+    transform: scale(1.1) rotate(-1deg);
+  }
+  80% {
+    transform: scale(1.02) rotate(3deg);
+  }
+}
+
+@keyframes jumpscare-text-glitch {
+  0%,
+  100% {
+    transform: translateX(0) skewX(0deg);
+    opacity: 1;
+  }
+  30% {
+    transform: translateX(-4px) skewX(-4deg);
+    opacity: 0.7;
+  }
+  60% {
+    transform: translateX(4px) skewX(3deg);
+  }
+}
+
+.jumpscare-overlay {
+  background-color: black;
+  animation: jumpscare-flash 0.65s steps(6, end) forwards;
+}
+
+.jumpscare-static {
+  background-image: repeating-linear-gradient(
+    0deg,
+    oklch(1 0 0 / 0.06) 0px,
+    transparent 1px,
+    transparent 2px,
+    oklch(1 0 0 / 0.04) 3px
+  );
+  mix-blend-mode: overlay;
+  animation: jumpscare-flash 0.5s steps(8, end) infinite alternate;
+}
+
+.jumpscare-eyes {
+  animation: jumpscare-shake 0.65s ease-in-out;
+  filter: drop-shadow(0 0 22px oklch(0.6 0.2 25 / 0.9));
+}
+
+.jumpscare-text {
+  animation: jumpscare-text-glitch 0.5s steps(4, end) 2;
+}
