@@ -32,9 +32,21 @@ CREATE TABLE IF NOT EXISTS rooms (
   haunt_seq integer NOT NULL DEFAULT 0,
   haunt_kind text,
   haunt_message text,
+  ask_seq integer NOT NULL DEFAULT 0,
+  ghost_question text,
+  ghost_answer text,
+  ghost_answer_revealed integer NOT NULL DEFAULT 0,
+  ghost_answering boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- migração aditiva para bancos já existentes (antes da conversa com o fantasma)
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS ask_seq integer NOT NULL DEFAULT 0;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS ghost_question text;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS ghost_answer text;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS ghost_answer_revealed integer NOT NULL DEFAULT 0;
+ALTER TABLE rooms ADD COLUMN IF NOT EXISTS ghost_answering boolean NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS players (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -415,6 +427,61 @@ BEGIN
       haunt_message = jumpscares[1 + floor(random() * array_length(jumpscares,1))::int],
       updated_at = now() WHERE id = _room;
     PERFORM log_event(_room, 'jumpscare', (SELECT haunt_message FROM rooms WHERE id = _room));
+  END IF;
+END;
+$$;
+
+-- ============ conversa com o fantasma ============
+-- O jogador manda uma pergunta (mensagem assíncrona pro processo fantasma);
+-- a resposta é sorteada na hora, mas só é "entregue" aos poucos — cada
+-- chamada de tick soletra uma letra a mais (ver `progress_ghost_answer`),
+-- como se a planchette estivesse deslizando sozinha até cada letra.
+CREATE OR REPLACE FUNCTION ask_ghost(_player uuid, _question text)
+RETURNS text LANGUAGE plpgsql AS $$
+DECLARE
+  p players; r rooms;
+  answers text[] := ARRAY[
+    'SIM', 'NAO', 'TALVEZ', 'NUNCA',
+    'KERNEL PANIC', 'SEGFAULT', 'CORE DUMPED', 'ACESSO NEGADO',
+    'STACK OVERFLOW', 'MEMORIA VAZOU', 'PROCESSO ORFAO', 'ZUMBI ETERNO',
+    'PID 0 SABE', 'EU SOU O INIT', 'SEM COLETA', 'DEADLOCK EM VOCE',
+    'SIGKILL EM BREVE', 'VOCE E O ZUMBI', '3 SEGUNDOS', 'SEM WAIT PARA MIM'
+  ];
+BEGIN
+  SELECT * INTO p FROM players WHERE id = _player;
+  IF p.id IS NULL THEN RAISE EXCEPTION 'Jogador inválido'; END IF;
+  SELECT * INTO r FROM rooms WHERE id = p.room_id;
+  IF r.ghost_answering THEN RETURN 'busy'; END IF;
+  IF length(trim(_question)) = 0 THEN RETURN 'empty'; END IF;
+
+  UPDATE rooms SET
+    ghost_question = left(trim(_question), 140),
+    ghost_answer = answers[1 + floor(random() * array_length(answers,1))::int],
+    ghost_answer_revealed = 0,
+    ghost_answering = true,
+    ask_seq = ask_seq + 1,
+    updated_at = now()
+  WHERE id = r.id;
+
+  PERFORM log_event(r.id, 'ask', p.name || ' perguntou ao ESPÍRITO: "' || left(trim(_question), 140) || '"');
+  RETURN 'ok';
+END;
+$$;
+
+-- soletra uma letra da resposta por chamada (chamado no mesmo ritmo do tick)
+CREATE OR REPLACE FUNCTION progress_ghost_answer(_room uuid)
+RETURNS void LANGUAGE plpgsql AS $$
+DECLARE r rooms;
+BEGIN
+  SELECT * INTO r FROM rooms WHERE id = _room;
+  IF r.id IS NULL OR NOT r.ghost_answering THEN RETURN; END IF;
+
+  IF r.ghost_answer_revealed < length(r.ghost_answer) THEN
+    UPDATE rooms SET ghost_answer_revealed = ghost_answer_revealed + 1, updated_at = now()
+      WHERE id = _room;
+  ELSE
+    UPDATE rooms SET ghost_answering = false, updated_at = now() WHERE id = _room;
+    PERFORM log_event(_room, 'ghost', 'O ESPÍRITO respondeu: "' || r.ghost_answer || '"');
   END IF;
 END;
 $$;

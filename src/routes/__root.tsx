@@ -76,12 +76,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Tabuleiro Ouija do Kernel" },
       {
         name: "description",
-        content: "Jogo multiplayer de terror sobre Sistemas Operacionais: mutex, deadlock e um processo fantasma.",
+        content:
+          "Jogo multiplayer de terror sobre Sistemas Operacionais: mutex, deadlock e um processo fantasma.",
       },
       { property: "og:title", content: "Tabuleiro Ouija do Kernel" },
       {
         property: "og:description",
-        content: "Sessão espírita concorrente: mutex, semáforos, deadlock e um processo fantasma à espreita.",
+        content:
+          "Sessão espírita concorrente: mutex, semáforos, deadlock e um processo fantasma à espreita.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },

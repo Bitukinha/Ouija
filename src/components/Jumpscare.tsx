@@ -26,10 +26,7 @@ export function Jumpscare({ message, onDone }: Props) {
       aria-hidden="true"
     >
       <div className="jumpscare-static absolute inset-0" />
-      <svg
-        viewBox="0 0 200 200"
-        className="jumpscare-eyes relative h-40 w-40 sm:h-56 sm:w-56"
-      >
+      <svg viewBox="0 0 200 200" className="jumpscare-eyes relative h-40 w-40 sm:h-56 sm:w-56">
         <circle cx="55" cy="100" r="26" fill="var(--color-destructive)" />
         <circle cx="145" cy="100" r="26" fill="var(--color-destructive)" />
         <circle cx="55" cy="100" r="8" fill="black" />

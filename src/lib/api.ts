@@ -12,9 +12,7 @@ export const getRoomState = createServerFn({ method: "GET" })
   .validator((code: string) => code)
   .handler(async ({ data: code }) => {
     const db = sql();
-    const room = firstRow<Room>(
-      await db`SELECT * FROM rooms WHERE code = ${code.toUpperCase()}`,
-    );
+    const room = firstRow<Room>(await db`SELECT * FROM rooms WHERE code = ${code.toUpperCase()}`);
     if (!room) return { room: null, players: [] as Player[], events: [] as GameEvent[] };
     const [players, events] = await Promise.all([
       db`SELECT * FROM players WHERE room_id = ${room.id} ORDER BY joined_at`,
@@ -99,7 +97,10 @@ export const writeLetter = createServerFn({ method: "POST" })
     const rows = await sql()`SELECT write_letter(${data.playerId}, ${data.ch}) AS out`;
     const row = firstRow<{ out: unknown }>(rows);
     const out = row?.out;
-    const parsed = typeof out === "string" ? (JSON.parse(out) as { result: string }) : (out as { result: string });
+    const parsed =
+      typeof out === "string"
+        ? (JSON.parse(out) as { result: string })
+        : (out as { result: string });
     return parsed ?? { result: "ok" };
   });
 
@@ -107,6 +108,20 @@ export const tickRoom = createServerFn({ method: "POST" })
   .validator((d: { roomId: string }) => d)
   .handler(async ({ data }) => {
     await sql()`SELECT tick_room(${data.roomId})`;
+  });
+
+export const askGhost = createServerFn({ method: "POST" })
+  .validator((d: { playerId: string; question: string }) => d)
+  .handler(async ({ data }) => {
+    const rows = await sql()`SELECT ask_ghost(${data.playerId}, ${data.question}) AS out`;
+    const row = firstRow<{ out: string }>(rows);
+    return row?.out ?? "ok";
+  });
+
+export const tickGhostAnswer = createServerFn({ method: "POST" })
+  .validator((d: { roomId: string }) => d)
+  .handler(async ({ data }) => {
+    await sql()`SELECT progress_ghost_answer(${data.roomId})`;
   });
 
 const roomConfigSchema = z.object({

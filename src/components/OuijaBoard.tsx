@@ -148,7 +148,13 @@ export function OuijaBoard({ onPick, disabled, lastLetter, corruption, ghostMovi
 
         <div
           className={`planchette ${planchette ? "planchette-active" : ""} ${ghostMoving ? "planchette-ghost" : ""}`}
-          style={planchette ? { transform: `translate(${planchette.x}px, ${planchette.y}px) translate(-50%, -65%)` } : undefined}
+          style={
+            planchette
+              ? {
+                  transform: `translate(${planchette.x}px, ${planchette.y}px) translate(-50%, -65%)`,
+                }
+              : undefined
+          }
         >
           <div className="planchette-body">
             <span className="planchette-eye" />

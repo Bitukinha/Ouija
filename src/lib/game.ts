@@ -21,6 +21,11 @@ export type Room = {
   haunt_seq: number;
   haunt_kind: string | null;
   haunt_message: string | null;
+  ask_seq: number;
+  ghost_question: string | null;
+  ghost_answer: string | null;
+  ghost_answer_revealed: number;
+  ghost_answering: boolean;
 };
 
 /** PID sentinela do processo fantasma — nunca existe em `players`. */
@@ -66,14 +71,7 @@ export const PHRASES = [
   "EXCLUSAO MUTUA AGORA",
 ];
 
-export const COLORS = [
-  "#9ff2b5",
-  "#f2c46b",
-  "#f28b6b",
-  "#a5b8f2",
-  "#e2a2f2",
-  "#6bd8f2",
-];
+export const COLORS = ["#9ff2b5", "#f2c46b", "#f28b6b", "#a5b8f2", "#e2a2f2", "#6bd8f2"];
 
 export const SCHEDULER_LABEL: Record<Scheduler, string> = {
   fifo: "FIFO (ordem de chegada)",

@@ -6,6 +6,7 @@ import { Jumpscare } from "@/components/Jumpscare";
 import {
   acquireCandle,
   acquirePointer,
+  askGhost,
   configRoom,
   joinRoom,
   killProcess,
@@ -14,6 +15,7 @@ import {
   resetRoom,
   reviveProcess,
   startRoom,
+  tickGhostAnswer,
   tickRoom,
   writeLetter,
 } from "@/lib/api";
@@ -28,7 +30,18 @@ import {
   type Scheduler,
 } from "@/lib/game";
 import { useRoomState } from "@/lib/use-room-state";
-import { armAudio, muteAudio, isAudioArmed, playFakeWrite, playJumpscare, playSteal, playWhisper, startHeartbeat, stopHeartbeat } from "@/lib/ghost-audio";
+import {
+  armAudio,
+  muteAudio,
+  isAudioArmed,
+  playFakeWrite,
+  playGlide,
+  playJumpscare,
+  playSteal,
+  playWhisper,
+  startHeartbeat,
+  stopHeartbeat,
+} from "@/lib/ghost-audio";
 
 export const Route = createFileRoute("/sala/$code")({
   head: ({ params }) => ({
@@ -75,7 +88,11 @@ function RoomPage() {
   const [joinName, setJoinName] = useState("");
   const [audioOn, setAudioOn] = useState(false);
   const [scare, setScare] = useState<{ seq: number; message: string } | null>(null);
+  const [question, setQuestion] = useState("");
+  const [askStatus, setAskStatus] = useState<string | null>(null);
   const lastHauntSeq = useRef(0);
+  const lastAskSeq = useRef(0);
+  const lastRevealed = useRef(0);
 
   useEffect(() => {
     setMeId(storedPlayerId(code));
@@ -91,7 +108,39 @@ function RoomPage() {
       void tickRoom({ data: { roomId: room.id } });
     }, 1200);
     return () => window.clearInterval(id);
-  }, [isHost, room?.id, room?.phase]);
+  }, [isHost, room?.id, room?.phase, room]);
+
+  // conversa com o fantasma: soletra a resposta aos poucos, em qualquer fase
+  useEffect(() => {
+    if (!isHost || !room) return;
+    const id = window.setInterval(() => {
+      void tickGhostAnswer({ data: { roomId: room.id } });
+    }, 1100);
+    return () => window.clearInterval(id);
+  }, [isHost, room?.id, room]);
+
+  // reseta o acompanhamento da resposta a cada nova pergunta
+  useEffect(() => {
+    if (!room) return;
+    if (room.ask_seq !== lastAskSeq.current) {
+      lastAskSeq.current = room.ask_seq;
+      lastRevealed.current = 0;
+    }
+  }, [room?.ask_seq]);
+
+  // planchette desliza sozinha soletrando a resposta do fantasma
+  useEffect(() => {
+    if (!room || !room.ghost_answer) return;
+    const revealed = room.ghost_answer_revealed;
+    if (revealed <= lastRevealed.current) return;
+    const ch = room.ghost_answer[revealed - 1];
+    lastRevealed.current = revealed;
+    if (!ch) return;
+    playGlide();
+    setGhostMoving(true);
+    setLastLetter(ch === " " ? " " : ch.toUpperCase());
+    window.setTimeout(() => setGhostMoving(false), 700);
+  }, [room?.ghost_answer_revealed, room?.ghost_answer]);
 
   // reage às assombrações do processo fantasma
   useEffect(() => {
@@ -184,6 +233,19 @@ function RoomPage() {
       setStatus(RESULT_MESSAGE[result.result] ?? result.result);
     } catch (e) {
       setStatus(e instanceof Error ? e.message : "Erro ao escrever");
+    }
+  }
+
+  async function askQuestion() {
+    if (!me || !question.trim()) return;
+    try {
+      const out = await askGhost({ data: { playerId: me.id, question: question.trim() } });
+      if (out === "busy") setAskStatus("O espírito ainda está respondendo a outra pergunta.");
+      else if (out === "empty") setAskStatus(null);
+      else setAskStatus(null);
+      setQuestion("");
+    } catch (e) {
+      setAskStatus(e instanceof Error ? e.message : "Erro ao perguntar");
     }
   }
 
@@ -291,7 +353,9 @@ function RoomPage() {
               return (
                 <span
                   key={i}
-                  className={done ? "text-phosphor" : known ? "text-ember/80" : "text-muted-foreground/50"}
+                  className={
+                    done ? "text-phosphor" : known ? "text-ember/80" : "text-muted-foreground/50"
+                  }
                 >
                   {done ? revealed[i] : ch === " " ? " " : known ? known.ch.toLowerCase() : "•"}
                 </span>
@@ -357,12 +421,60 @@ function RoomPage() {
           </span>
         </div>
 
+        <div className="panel space-y-3 p-4">
+          <h2 className="text-sm tracking-[0.25em] text-primary">FALE COM O ESPÍRITO</h2>
+          <p className="terminal text-muted-foreground">
+            uma pergunta é uma mensagem assíncrona para o processo fantasma — ele responde quando
+            quiser, uma letra por vez.
+          </p>
+          <div className="flex gap-2">
+            <input
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && void askQuestion()}
+              disabled={room.ghost_answering}
+              maxLength={140}
+              placeholder="ex.: você está aqui?"
+              className="w-full rounded border border-border bg-input px-3 py-2 font-mono text-sm outline-none focus:border-ghost disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={() => void askQuestion()}
+              disabled={room.ghost_answering || !question.trim()}
+              className="shrink-0 rounded border border-ghost px-4 py-2 font-display text-xs tracking-[0.2em] text-ghost transition hover:bg-ghost/10 disabled:opacity-40"
+            >
+              PERGUNTAR
+            </button>
+          </div>
+
+          {room.ghost_question && (
+            <div className="terminal space-y-1">
+              <p className="text-muted-foreground">
+                pergunta: <span className="text-foreground">"{room.ghost_question}"</span>
+              </p>
+              <p
+                className={`text-lg tracking-[0.2em] ${room.ghost_answering ? "ghost-line text-ghost" : "text-ghost"}`}
+              >
+                {room.ghost_answer
+                  ?.split("")
+                  .map((ch, i) => (i < room.ghost_answer_revealed ? ch : ch === " " ? " " : "▮"))
+                  .join("")}
+                {room.ghost_answering && <span className="animate-pulse">▮</span>}
+              </p>
+            </div>
+          )}
+
+          {askStatus && <p className="terminal text-destructive">{askStatus}</p>}
+        </div>
+
         {room.deadlock && (
           <div className="panel border-destructive/70 p-4 text-center">
-            <h2 className="text-sm tracking-[0.25em] text-destructive flicker">IMPASSE DETECTADO</h2>
+            <h2 className="text-sm tracking-[0.25em] text-destructive flicker">
+              IMPASSE DETECTADO
+            </h2>
             <p className="mt-2 font-serif text-sm text-muted-foreground">
-              {pointerOwner?.name} espera a vela de {candleOwner?.name}, que espera o ponteiro. Ciclo
-              fechado no grafo de alocação — o kernel precisa encerrar um processo.
+              {pointerOwner?.name} espera a vela de {candleOwner?.name}, que espera o ponteiro.
+              Ciclo fechado no grafo de alocação — o kernel precisa encerrar um processo.
             </p>
           </div>
         )}

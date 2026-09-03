@@ -14,7 +14,10 @@ type OscillatorInterval = ReturnType<typeof setInterval> | null;
 
 function ensureContext(): AudioContext {
   if (!ctx) {
-    ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    ctx = new (
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
+    )();
     master = ctx.createGain();
     master.gain.value = 0.5;
     master.connect(ctx.destination);
@@ -29,7 +32,10 @@ function noiseBuffer(context: AudioContext, seconds: number): AudioBuffer {
   return buffer;
 }
 
-function burstNoise(context: AudioContext, opts: { duration: number; freq: number; q: number; gain: number; delay?: number }) {
+function burstNoise(
+  context: AudioContext,
+  opts: { duration: number; freq: number; q: number; gain: number; delay?: number },
+) {
   const src = context.createBufferSource();
   src.buffer = noiseBuffer(context, opts.duration);
   const filter = context.createBiquadFilter();
@@ -46,7 +52,17 @@ function burstNoise(context: AudioContext, opts: { duration: number; freq: numbe
   src.stop(t0 + opts.duration + 0.05);
 }
 
-function tone(context: AudioContext, opts: { freq: number; toFreq?: number; duration: number; gain: number; type?: OscillatorType; delay?: number }) {
+function tone(
+  context: AudioContext,
+  opts: {
+    freq: number;
+    toFreq?: number;
+    duration: number;
+    gain: number;
+    type?: OscillatorType;
+    delay?: number;
+  },
+) {
   const osc = context.createOscillator();
   osc.type = opts.type ?? "sine";
   const t0 = context.currentTime + (opts.delay ?? 0);
@@ -105,6 +121,12 @@ export function playSteal() {
   if (!ctx || ctx.state !== "running" || !master) return;
   tone(ctx, { freq: 220, toFreq: 40, duration: 0.5, gain: 0.18, type: "sawtooth" });
   burstNoise(ctx, { duration: 0.3, freq: 400, q: 1.2, gain: 0.08, delay: 0.05 });
+}
+
+export function playGlide() {
+  if (!ctx || ctx.state !== "running" || !master) return;
+  burstNoise(ctx, { duration: 0.18, freq: 900, q: 4, gain: 0.03 });
+  tone(ctx, { freq: 260, toFreq: 220, duration: 0.15, gain: 0.02, type: "triangle" });
 }
 
 export function playFakeWrite() {
