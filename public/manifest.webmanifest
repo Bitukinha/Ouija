@@ -1,0 +1,33 @@
+{
+  "name": "Tabuleiro Ouija do Kernel",
+  "short_name": "Ouija do Kernel",
+  "description": "Jogo multiplayer de terror para Sistemas Operacionais: mutex, deadlock, escalonadores e um processo fantasma.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#141010",
+  "theme_color": "#141010",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["games", "education"],
+  "icons": [
+    { "src": "/icons/icon-16.png", "sizes": "16x16", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-32.png", "sizes": "32x32", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    {
+      "src": "/icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
